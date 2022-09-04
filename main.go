@@ -2,6 +2,10 @@ package main
 
 import "fmt"
 
+var (
+	version = "version"
+)
+
 func main() {
-	fmt.Println("Hello, world!")
+	fmt.Println("version:", version)
 }

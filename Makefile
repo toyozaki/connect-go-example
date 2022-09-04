@@ -1,4 +1,5 @@
 PACKAGE_NAME=$(shell basename $(shell pwd))
+LDFLAGS="-s -X main.version=$(shell git rev-parse --short HEAD)"
 
 .PHONY: all
 all: prepare test build
@@ -14,7 +15,7 @@ test:
 
 .PHONY: build
 build:
-	go build -o $(PACKAGE_NAME)
+	go build -ldflags $(LDFLAGS) -o $(PACKAGE_NAME)
 
 .PHONY: run
 run:
