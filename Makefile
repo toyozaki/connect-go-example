@@ -8,7 +8,6 @@ all: prepare test build
 prepare:
 	go get -t -v ./...
 
-
 .PHONY: test
 test:
 	go test ./...
