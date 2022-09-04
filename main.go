@@ -1,11 +1,9 @@
 package main
 
-import "fmt"
-
-var (
-	version = "version"
+import (
+	"github.com/toyozaki/tempctl/cmd"
 )
 
 func main() {
-	fmt.Println("version:", version)
+	cmd.Execute()
 }
