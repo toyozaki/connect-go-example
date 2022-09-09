@@ -1,4 +1,4 @@
-module github.com/toyozaki/tempctl
+module github.com/toyozaki/connect-go-example
 
 go 1.19
 

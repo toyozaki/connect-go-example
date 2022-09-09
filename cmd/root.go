@@ -10,7 +10,7 @@ import (
 
 var (
 	cfgFile string
-	appName = "tempctl"
+	appName = "connect-go-example"
 	rootCmd = &cobra.Command{
 		Use:   appName,
 		Short: fmt.Sprintf("%s is a template\n", appName),
