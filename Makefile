@@ -21,6 +21,23 @@ build:
 run:
 	go run main.go
 
+.PHONY: requirements
+requirements:
+	brew install clang-format
+	go install github.com/bufbuild/buf/cmd/buf@latest
+	go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install github.com/bufbuild/connect-go/cmd/protoc-gen-connect-go@latest
+
+.PHONY: test-requirements
+test-requirements:
+	which buf grpcurl protoc-gen-go protoc-gen-connect-go
+
+.PHONY: generate
+generate:
+	buf lint
+	buf generate
+
 .PHONY: clean
 clean:
 	rm $(PACKAGE_NAME)

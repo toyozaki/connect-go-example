@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/toyozaki/connect-go-example/api"
+	"github.com/toyozaki/connect-go-example/cmd/utils"
 )
 
 var (
@@ -15,8 +17,8 @@ var (
 		Use:   appName,
 		Short: fmt.Sprintf("%s is a template\n", appName),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("%s is a template\n", appName)
-			fmt.Println("host:", viper.GetString("host"))
+			addr := utils.GetAddr()
+			api.Run(addr)
 		},
 	}
 )
@@ -34,8 +36,12 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/.%s.yaml)", appName))
 
 	host := "host"
-	rootCmd.Flags().StringP(host, "", "", "host")
+	rootCmd.Flags().StringP(host, "", "localhost", "host")
 	viper.BindPFlag(host, rootCmd.Flags().Lookup(host))
+
+	port := "port"
+	rootCmd.Flags().IntP(port, "", 8080, "port")
+	viper.BindPFlag(port, rootCmd.Flags().Lookup(port))
 }
 
 func initConfig() {
