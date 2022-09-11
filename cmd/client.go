@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	clientCmd.PersistentFlags().String("addr", "http://localhost:8080", "addr")
+	clientCmd.PersistentFlags().String("addr", "http://localhost:8080/grpc/", "addr")
 	clientCmd.PersistentFlags().String("name", "toyozaki", "your name")
 	clientCmd.AddCommand(clientGreetCmd)
 	rootCmd.AddCommand(clientCmd)
