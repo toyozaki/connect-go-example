@@ -9,6 +9,7 @@ import (
 	"github.com/bufbuild/connect-go"
 	greetv1 "github.com/toyozaki/connect-go-example/gen/greet/v1"
 	"github.com/toyozaki/connect-go-example/gen/greet/v1/greetv1connect"
+	"github.com/toyozaki/connect-go-example/interceptors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
@@ -17,6 +18,8 @@ type Client struct {
 }
 
 func NewGreetClient(addr string) *Client {
+	interceptors := connect.WithInterceptors(interceptors.NewAuthInterceptor())
+
 	client := greetv1connect.NewGreetServiceClient(
 		http.DefaultClient,
 		addr,
@@ -24,6 +27,7 @@ func NewGreetClient(addr string) *Client {
 		// check server log's content-type
 		// connect.WithGRPC(),
 		connect.WithGRPCWeb(),
+		interceptors,
 	)
 	return &Client{
 		client,
