@@ -37,6 +37,10 @@ func (c *Client) Greet(name string) {
 	)
 	if err != nil {
 		if connectErr := new(connect.Error); errors.As(err, &connectErr) {
+			// get headers
+			log.Println("Greet-Version in Header", connectErr.Meta().Get("Greet-Version"))
+			log.Println("Greet-Version in Trailer", connectErr.Meta().Get("Greet-Version"))
+
 			if retryInfoErr, ok := extractRetryInfo(connectErr); ok {
 				log.Fatalln(connectErr.Message(), retryInfoErr.GetRetryDelay())
 			}
@@ -44,6 +48,14 @@ func (c *Client) Greet(name string) {
 		}
 		log.Fatalln(connect.CodeOf(err))
 	}
+
+	log.Println("Greet-Version in Header", res.Header().Get("Greet-Version"))
+	log.Println("Greet-Version in Trailer", res.Trailer().Get("Greet-Version"))
+	encodedEmoji := res.Header().Get("Greet-Emoji-Bin")
+	if decodedEmoji, err := connect.DecodeBinaryHeader(encodedEmoji); err == nil {
+		log.Println("Greet-Emoji", string(decodedEmoji))
+	}
+
 	log.Println(res.Msg.Greeting)
 }
 

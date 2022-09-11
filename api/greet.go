@@ -35,13 +35,23 @@ func (s *GreetServer) Greet(ctx context.Context, req *connect.Request[greetv1.Gr
 		Greeting: greeting,
 	})
 	res.Header().Set("Greet-Version", "v1")
+	res.Trailer().Set("Greet-Version", "v1")
+
+	// no-ASCII値をheaderで送る場合、base64エンコードが必要になる
+	// また、-Binをサフィックスに付ける必要がある
+	res.Header().Set(
+		"Greet-Emoji-Bin",
+		connect.EncodeBinaryHeader([]byte("👋")),
+	)
 
 	return res, nil
 }
 
 func validateGreetRequest(msg *greetv1.GreetRequest) error {
 	if msg.Name == "invalid" {
-		return connect.NewError(connect.CodeInvalidArgument, errors.New("invalid name"))
+		connectErr := connect.NewError(connect.CodeInvalidArgument, errors.New("invalid name"))
+		connectErr = setGreetVersionToErr(connectErr)
+		return connectErr
 	}
 	if msg.Name == "trasient" {
 		return newTransientError()
@@ -64,5 +74,13 @@ func newTransientError() error {
 	if detail, detailErr := connect.NewErrorDetail(retryInfo); detailErr == nil {
 		err.AddDetail(detail)
 	}
+
+	err = setGreetVersionToErr(err)
+
 	return err
+}
+
+func setGreetVersionToErr(connectErr *connect.Error) *connect.Error {
+	connectErr.Meta().Set("Greet-Version", "v1")
+	return connectErr
 }
