@@ -7,8 +7,8 @@ package greetv1connect
 import (
 	context "context"
 	errors "errors"
-	v1 "github.com/toyozaki/connect-go-example/gen/greet/v1"
 	connect_go "github.com/bufbuild/connect-go"
+	v1 "github.com/toyozaki/connect-go-example/gen/greet/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -27,7 +27,8 @@ const (
 
 // GreetServiceClient is a client for the greet.v1.GreetService service.
 type GreetServiceClient interface {
-	Greet(context.Context, *connect_go.Request[v1.GreetRequest]) (*connect_go.Response[v1.GreetResponse], error)
+	UnaryGreet(context.Context, *connect_go.Request[v1.UnaryGreetRequest]) (*connect_go.Response[v1.UnaryGreetResponse], error)
+	ClientStreamGreet(context.Context) *connect_go.ClientStreamForClient[v1.ClientStreamGreetRequest, v1.ClientStreamGreetResponse]
 }
 
 // NewGreetServiceClient constructs a client for the greet.v1.GreetService service. By default, it
@@ -40,9 +41,14 @@ type GreetServiceClient interface {
 func NewGreetServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) GreetServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &greetServiceClient{
-		greet: connect_go.NewClient[v1.GreetRequest, v1.GreetResponse](
+		unaryGreet: connect_go.NewClient[v1.UnaryGreetRequest, v1.UnaryGreetResponse](
 			httpClient,
-			baseURL+"/greet.v1.GreetService/Greet",
+			baseURL+"/greet.v1.GreetService/UnaryGreet",
+			opts...,
+		),
+		clientStreamGreet: connect_go.NewClient[v1.ClientStreamGreetRequest, v1.ClientStreamGreetResponse](
+			httpClient,
+			baseURL+"/greet.v1.GreetService/ClientStreamGreet",
 			opts...,
 		),
 	}
@@ -50,17 +56,24 @@ func NewGreetServiceClient(httpClient connect_go.HTTPClient, baseURL string, opt
 
 // greetServiceClient implements GreetServiceClient.
 type greetServiceClient struct {
-	greet *connect_go.Client[v1.GreetRequest, v1.GreetResponse]
+	unaryGreet        *connect_go.Client[v1.UnaryGreetRequest, v1.UnaryGreetResponse]
+	clientStreamGreet *connect_go.Client[v1.ClientStreamGreetRequest, v1.ClientStreamGreetResponse]
 }
 
-// Greet calls greet.v1.GreetService.Greet.
-func (c *greetServiceClient) Greet(ctx context.Context, req *connect_go.Request[v1.GreetRequest]) (*connect_go.Response[v1.GreetResponse], error) {
-	return c.greet.CallUnary(ctx, req)
+// UnaryGreet calls greet.v1.GreetService.UnaryGreet.
+func (c *greetServiceClient) UnaryGreet(ctx context.Context, req *connect_go.Request[v1.UnaryGreetRequest]) (*connect_go.Response[v1.UnaryGreetResponse], error) {
+	return c.unaryGreet.CallUnary(ctx, req)
+}
+
+// ClientStreamGreet calls greet.v1.GreetService.ClientStreamGreet.
+func (c *greetServiceClient) ClientStreamGreet(ctx context.Context) *connect_go.ClientStreamForClient[v1.ClientStreamGreetRequest, v1.ClientStreamGreetResponse] {
+	return c.clientStreamGreet.CallClientStream(ctx)
 }
 
 // GreetServiceHandler is an implementation of the greet.v1.GreetService service.
 type GreetServiceHandler interface {
-	Greet(context.Context, *connect_go.Request[v1.GreetRequest]) (*connect_go.Response[v1.GreetResponse], error)
+	UnaryGreet(context.Context, *connect_go.Request[v1.UnaryGreetRequest]) (*connect_go.Response[v1.UnaryGreetResponse], error)
+	ClientStreamGreet(context.Context, *connect_go.ClientStream[v1.ClientStreamGreetRequest]) (*connect_go.Response[v1.ClientStreamGreetResponse], error)
 }
 
 // NewGreetServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -70,9 +83,14 @@ type GreetServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewGreetServiceHandler(svc GreetServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/greet.v1.GreetService/Greet", connect_go.NewUnaryHandler(
-		"/greet.v1.GreetService/Greet",
-		svc.Greet,
+	mux.Handle("/greet.v1.GreetService/UnaryGreet", connect_go.NewUnaryHandler(
+		"/greet.v1.GreetService/UnaryGreet",
+		svc.UnaryGreet,
+		opts...,
+	))
+	mux.Handle("/greet.v1.GreetService/ClientStreamGreet", connect_go.NewClientStreamHandler(
+		"/greet.v1.GreetService/ClientStreamGreet",
+		svc.ClientStreamGreet,
 		opts...,
 	))
 	return "/greet.v1.GreetService/", mux
@@ -81,6 +99,10 @@ func NewGreetServiceHandler(svc GreetServiceHandler, opts ...connect_go.HandlerO
 // UnimplementedGreetServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedGreetServiceHandler struct{}
 
-func (UnimplementedGreetServiceHandler) Greet(context.Context, *connect_go.Request[v1.GreetRequest]) (*connect_go.Response[v1.GreetResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("greet.v1.GreetService.Greet is not implemented"))
+func (UnimplementedGreetServiceHandler) UnaryGreet(context.Context, *connect_go.Request[v1.UnaryGreetRequest]) (*connect_go.Response[v1.UnaryGreetResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("greet.v1.GreetService.UnaryGreet is not implemented"))
+}
+
+func (UnimplementedGreetServiceHandler) ClientStreamGreet(context.Context, *connect_go.ClientStream[v1.ClientStreamGreetRequest]) (*connect_go.Response[v1.ClientStreamGreetResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("greet.v1.GreetService.ClientStreamGreet is not implemented"))
 }

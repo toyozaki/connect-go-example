@@ -2,16 +2,26 @@ syntax = "proto3";
 
 package greet.v1;
 
-option go_package = "example/gen/greet/v1;greetv1";
+option go_package = "github.com/toyozaki/connect-go-example/gen/greet/v1;greetv1";
 
 service GreetService {
-    rpc Greet(GreetRequest) returns (GreetResponse) {}
+    rpc UnaryGreet(UnaryGreetRequest) returns (UnaryGreetResponse) {}
+    rpc ClientStreamGreet(stream ClientStreamGreetRequest)
+        returns (ClientStreamGreetResponse) {}
 }
 
-message GreetRequest {
+message UnaryGreetRequest {
     string name = 1;
 }
 
-message GreetResponse {
+message UnaryGreetResponse {
+    string greeting = 1;
+}
+
+message ClientStreamGreetRequest {
+    string name = 1;
+}
+
+message ClientStreamGreetResponse {
     string greeting = 1;
 }
