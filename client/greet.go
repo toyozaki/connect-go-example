@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/bufbuild/connect-go"
 	greetv1 "github.com/toyozaki/connect-go-example/gen/greet/v1"
@@ -34,11 +35,37 @@ func NewGreetClient(addr string) *Client {
 	}
 }
 
-func (c *Client) Greet(name string) {
-	res, err := c.GreetServiceClient.Greet(
+func (c *Client) UnaryGreet(name string) {
+	res, err := c.GreetServiceClient.UnaryGreet(
 		context.Background(),
-		connect.NewRequest(&greetv1.GreetRequest{Name: name}),
+		connect.NewRequest(&greetv1.UnaryGreetRequest{Name: name}),
 	)
+
+	failOnError(err)
+
+	printGreetResponse(res)
+}
+
+func (c *Client) ClientStreamGreet(name string) {
+	greet := c.GreetServiceClient.ClientStreamGreet(context.Background())
+	var res *connect.Response[greetv1.ClientStreamGreetResponse]
+	for i := 0; i < 3; i++ {
+		err := greet.Send(&greetv1.ClientStreamGreetRequest{
+			Name: strconv.Itoa(i) + " : " + name,
+		})
+
+		if err != nil {
+			break
+		}
+	}
+
+	res, err := greet.CloseAndReceive()
+	failOnError(err)
+
+	printGreetResponse(res)
+}
+
+func failOnError(err error) {
 	if err != nil {
 		if connectErr := new(connect.Error); errors.As(err, &connectErr) {
 			// get headers
@@ -52,15 +79,6 @@ func (c *Client) Greet(name string) {
 		}
 		log.Fatalln(connect.CodeOf(err))
 	}
-
-	log.Println("Greet-Version in Header", res.Header().Get("Greet-Version"))
-	log.Println("Greet-Version in Trailer", res.Trailer().Get("Greet-Version"))
-	encodedEmoji := res.Header().Get("Greet-Emoji-Bin")
-	if decodedEmoji, err := connect.DecodeBinaryHeader(encodedEmoji); err == nil {
-		log.Println("Greet-Emoji", string(decodedEmoji))
-	}
-
-	log.Println(res.Msg.Greeting)
 }
 
 func extractRetryInfo(connectErr *connect.Error) (*errdetails.RetryInfo, bool) {
@@ -74,4 +92,15 @@ func extractRetryInfo(connectErr *connect.Error) (*errdetails.RetryInfo, bool) {
 		}
 	}
 	return nil, false
+}
+
+func printGreetResponse[T greetv1.UnaryGreetResponse | greetv1.ClientStreamGreetResponse](res *connect.Response[T]) {
+	log.Println("Greet-Version in Header", res.Header().Get("Greet-Version"))
+	log.Println("Greet-Version in Trailer", res.Trailer().Get("Greet-Version"))
+	encodedEmoji := res.Header().Get("Greet-Emoji-Bin")
+	if decodedEmoji, err := connect.DecodeBinaryHeader(encodedEmoji); err == nil {
+		log.Println("Greet-Emoji", string(decodedEmoji))
+	}
+
+	log.Println(res.Msg)
 }
