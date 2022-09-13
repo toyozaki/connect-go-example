@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 
@@ -11,6 +13,7 @@ import (
 	greetv1 "github.com/toyozaki/connect-go-example/gen/greet/v1"
 	"github.com/toyozaki/connect-go-example/gen/greet/v1/greetv1connect"
 	"github.com/toyozaki/connect-go-example/interceptors"
+	"golang.org/x/net/http2"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
@@ -21,8 +24,24 @@ type Client struct {
 func NewGreetClient(addr string) *Client {
 	interceptors := connect.WithInterceptors(interceptors.NewAuthInterceptor())
 
+	httpClient := &http.Client{
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Transport: &http2.Transport{
+			AllowHTTP: true,
+			DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {
+				// If you're also using this client for non-h2c traffic, you may want
+				// to delegate to tls.Dial if the network isn't TCP or the addr isn't
+				// in an allowlist.
+				return net.Dial(network, addr)
+			},
+			// Don't forget timeouts!
+		},
+	}
+
 	client := greetv1connect.NewGreetServiceClient(
-		http.DefaultClient,
+		httpClient,
 		addr,
 		// default: using connect protocol
 		// check server log's content-type

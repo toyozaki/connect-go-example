@@ -21,5 +21,6 @@ func Run(addr string) {
 	http.ListenAndServe(
 		addr,
 		h2c.NewHandler(mux, &http2.Server{}),
+		// Don't forget timeouts!
 	)
 }
